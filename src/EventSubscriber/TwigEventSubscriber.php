@@ -9,8 +9,8 @@ use Twig\Environment;
 
 class TwigEventSubscriber implements EventSubscriberInterface
 {
-    private $twig;
-    private $conferenceRepository;
+    private Environment $twig;
+    private ConferenceRepository $conferenceRepository;
 
     public function __construct(Environment $twig, ConferenceRepository $conferenceRepository)
     {
@@ -19,7 +19,7 @@ class TwigEventSubscriber implements EventSubscriberInterface
     }
     public function onControllerEvent(ControllerEvent $event): void
     {
-        $this->twig->addGlobal('conference', $this->conferenceRepository->findAll());
+        $this->twig->addGlobal('conferences', $this->conferenceRepository->findAll());
     }
 
     public static function getSubscribedEvents(): array
