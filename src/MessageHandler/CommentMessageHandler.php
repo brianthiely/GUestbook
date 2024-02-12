@@ -2,6 +2,7 @@
 
 namespace App\MessageHandler;
 
+use App\ImageOptimizer;
 use App\Message\CommentMessage;
 use App\Repository\CommentRepository;
 use App\SpamChecker;
@@ -13,7 +14,6 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Workflow\WorkflowInterface;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 #[AsMessageHandler]
 class CommentMessageHandler
@@ -26,11 +26,16 @@ class CommentMessageHandler
         private readonly WorkflowInterface                   $commentStateMachine,
         private readonly MailerInterface                     $mailer,
         #[Autowire('%admin_email%')] private readonly string $adminEmail,
+        private readonly ImageOptimizer                      $imageOptimizer,
+        #[Autowire('%photo_dir%')] private readonly string   $photoDir,
         private readonly ?LoggerInterface                    $logger = null,
     ) {
     }
 
 
+    /**
+     * @throws \Symfony\Component\Mailer\Exception\TransportExceptionInterface
+     */
     public function __invoke(CommentMessage $message): void
     {
         $comment = $this->commentRepository->find($message->getId());
@@ -55,6 +60,12 @@ class CommentMessageHandler
                 ->to($this->adminEmail)
                 ->context(['comment' => $comment])
             );
+        } elseif ($this->commentStateMachine->can($comment, 'optimize')) {
+            if ($comment->getPhotoFilename()) {
+                $this->imageOptimizer->resize($this->photoDir.'/'.$comment->getPhotoFilename());
+            }
+            $this->commentStateMachine->apply($comment, 'optimize');
+            $this->entityManager->flush();
         } elseif ($this->logger) {
             $this->logger->debug('Dropping comment message', ['comment' => $comment->getId(), 'state' => $comment->getState()]);
         }
