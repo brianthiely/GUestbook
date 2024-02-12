@@ -4,21 +4,22 @@ namespace App\Tests\Controller;
 
 use App\Repository\CommentRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Panther\PantherTestCase;
+use Exception;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class ConferenceControllerTest extends PantherTestCase
+class ConferenceControllerTest extends WebTestCase
 {
     public function testSomething(): void
     {
-        $client = static::createPantherClient(['external_base_uri' => rtrim($_SERVER['SYMFONY_PROJECT_DEFAULT_ROUTE_URL'], '/')]);
-        $crawler = $client->request('GET', '/');
+        $client = static::createClient();
+        $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
         $this->assertSelectorTextContains('h2', 'Give your feedback');
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function testCommentSubmission()
     {

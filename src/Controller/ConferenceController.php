@@ -23,7 +23,7 @@ class ConferenceController extends AbstractController
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private MessageBusInterface             $bus,
+        private readonly MessageBusInterface    $bus,
     )
     {
     }
@@ -41,7 +41,8 @@ class ConferenceController extends AbstractController
     public function show(Request                           $request,
                          Conference                        $conference,
                          CommentRepository                 $commentRepository,
-                         #[Autowire('%photo_dir%')] string $photoDir,): Response
+                         #[Autowire('%photo_dir%')] string $photoDir,
+    ): Response
     {
         $comment = new Comment();
         $form = $this->createForm(CommentType::class, $comment);
@@ -65,6 +66,7 @@ class ConferenceController extends AbstractController
             ];
 
             $this->bus->dispatch(new CommentMessage($comment->getId(), $context));
+
 
             return $this->redirectToRoute('conference', ['slug' => $conference->getSlug()]);
         }
